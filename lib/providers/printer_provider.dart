@@ -36,12 +36,10 @@ class PrinterProvider extends ChangeNotifier {
       await _printer.setTextTypeface(IminTypeface.typefaceMonospace);
       await _printer.setAlignment(IminPrintAlign.center);
       await _printer.printText('=== PRINTER TEST ===\n');
-
       await _printer.setTextSize(22);
       await _printer.setAlignment(IminPrintAlign.center);
       await _printer.printText('iMin D1 Pro\n');
       await _printer.printText('POS System Test\n\n');
-
       await _printer.setAlignment(IminPrintAlign.left);
       await _printer.setTextSize(20);
       await _printer.printText('Alignment Tests:\n');
@@ -51,28 +49,24 @@ class PrinterProvider extends ChangeNotifier {
       await _printer.printText('CENTER ALIGNED TEXT\n');
       await _printer.setAlignment(IminPrintAlign.right);
       await _printer.printText('RIGHT ALIGNED TEXT\n\n');
-
       await _printer.setAlignment(IminPrintAlign.left);
       await _printer.printText('Font Size Tests:\n');
       for (int size in [18, 22, 26, 30]) {
         await _printer.setTextSize(size);
         await _printer.printText('Size $size: Hello iMin!\n');
       }
-
       await _printer.setTextSize(20);
       await _printer.printText('\nCharacter Map:\n');
       await _printer.printText('0123456789\n');
       await _printer.printText('ABCDEFGHIJKLMNOPQRSTUVWXYZ\n');
       await _printer.printText('abcdefghijklmnopqrstuvwxyz\n');
       await _printer.printText('!@#\$%^&*()-+=[]{}|;:,.<>?\n\n');
-
       await _printer.setAlignment(IminPrintAlign.center);
       await _printer.setTextSize(22);
       await _printer.printText('--- TEST COMPLETE ---\n');
       await _printer.printAndLineFeed();
       await _printer.partialCut();
-
-      _setStatus(PrinterStatus.ready, 'Test page printed ✓');
+      _setStatus(PrinterStatus.ready, 'Test page printed');
     } catch (e) {
       _setStatus(PrinterStatus.error, 'Print failed: $e');
     }
@@ -90,7 +84,6 @@ class PrinterProvider extends ChangeNotifier {
   }) async {
     if (!_ensureReady()) return;
     _setStatus(PrinterStatus.printing, 'Printing receipt...');
-
     try {
       final now = DateTime.now();
       final dateStr =
@@ -98,19 +91,17 @@ class PrinterProvider extends ChangeNotifier {
       final timeStr =
           '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
 
-      // Header
       await _printer.setAlignment(IminPrintAlign.center);
       await _printer.setTextSize(28);
-      await _printer.setTextBold(true);
+      await _printer.setTextStyle(IminFontStyle.bold);
       await _printer.printText('MY STORE\n');
-      await _printer.setTextBold(false);
+      await _printer.setTextStyle(IminFontStyle.normal);
       await _printer.setTextSize(20);
       await _printer.printText('123 Main Street\n');
       await _printer.printText('City, State 12345\n');
       await _printer.printText('Tel: (555) 123-4567\n');
       await _printer.printText('--------------------------------\n');
 
-      // Order info
       await _printer.setAlignment(IminPrintAlign.left);
       await _printer.setTextSize(20);
       await _printer.printText('Order #: $orderNumber\n');
@@ -119,11 +110,10 @@ class PrinterProvider extends ChangeNotifier {
       await _printer.printText('Cashier: POS Terminal 1\n');
       await _printer.printText('--------------------------------\n');
 
-      // Items
-      await _printer.setTextBold(true);
+      await _printer.setTextStyle(IminFontStyle.bold);
       await _printer.printText(
           '${'ITEM'.padRight(16)}${'QTY'.padLeft(4)}${'PRICE'.padLeft(10)}\n');
-      await _printer.setTextBold(false);
+      await _printer.setTextStyle(IminFontStyle.normal);
       await _printer.printText('--------------------------------\n');
 
       for (final item in items) {
@@ -134,27 +124,23 @@ class PrinterProvider extends ChangeNotifier {
         final price = '\$${item.subtotal.toStringAsFixed(2)}'.padLeft(10);
         await _printer.printText('${name.padRight(16)}$qty$price\n');
         if (item.quantity > 1) {
-          final unitPrice =
-              '  @\$${item.product.price.toStringAsFixed(2)} each';
-          await _printer.printText('$unitPrice\n');
+          await _printer.printText(
+              '  @\$${item.product.price.toStringAsFixed(2)} each\n');
         }
       }
 
-      // Totals
       await _printer.printText('--------------------------------\n');
       await _printer.setAlignment(IminPrintAlign.right);
-      await _printer.printText(
-          'Subtotal:  \$${subtotal.toStringAsFixed(2)}\n');
+      await _printer.printText('Subtotal:  \$${subtotal.toStringAsFixed(2)}\n');
       await _printer.printText(
           'Tax (${(taxRate * 100).toStringAsFixed(0)}%):  \$${taxAmount.toStringAsFixed(2)}\n');
-      await _printer.setTextBold(true);
+      await _printer.setTextStyle(IminFontStyle.bold);
       await _printer.setTextSize(24);
       await _printer.printText('TOTAL:  \$${total.toStringAsFixed(2)}\n');
-      await _printer.setTextBold(false);
+      await _printer.setTextStyle(IminFontStyle.normal);
       await _printer.setTextSize(20);
       await _printer.printText('--------------------------------\n');
 
-      // Payment
       await _printer.setAlignment(IminPrintAlign.left);
       await _printer.printText('Payment: $paymentMethod\n');
       if (amountTendered != null && amountTendered > 0) {
@@ -165,30 +151,27 @@ class PrinterProvider extends ChangeNotifier {
       }
       await _printer.printText('--------------------------------\n');
 
-      // Footer
       await _printer.setAlignment(IminPrintAlign.center);
       await _printer.setTextSize(20);
       await _printer.printText('\nThank you for your purchase!\n');
       await _printer.printText('Please come again.\n\n');
-      await _printer.printText('Powered by iMin D1 Pro\n');
+      await _printer.printText('Powered by iMin D1 Pro\n\n');
 
-      // Barcode of order number
-      await _printer.printText('\n');
+      final barcodeContent = orderNumber.replaceAll('-', '');
       await _printer.printBarCode(
-        orderNumber.replaceAll('-', ''),
         IminBarcodeType.code128,
+        barcodeContent,
         style: IminBarCodeStyle(
           align: IminPrintAlign.center,
           height: 60,
-          width: IminBarcodeScaling.x2,
-          position: IminBarcodeTextPos.belowBarcode,
+          width: 2,
+          position: IminBarcodeTextPos.textBelow,
         ),
       );
 
       await _printer.printAndLineFeed();
       await _printer.partialCut();
-
-      _setStatus(PrinterStatus.ready, 'Receipt printed ✓');
+      _setStatus(PrinterStatus.ready, 'Receipt printed');
     } catch (e) {
       _setStatus(PrinterStatus.error, 'Print failed: $e');
     }
@@ -202,7 +185,6 @@ class PrinterProvider extends ChangeNotifier {
   }) async {
     if (!_ensureReady()) return;
     _setStatus(PrinterStatus.printing, 'Printing kitchen order...');
-
     try {
       final now = DateTime.now();
       final timeStr =
@@ -210,10 +192,9 @@ class PrinterProvider extends ChangeNotifier {
 
       await _printer.setAlignment(IminPrintAlign.center);
       await _printer.setTextSize(30);
-      await _printer.setTextBold(true);
+      await _printer.setTextStyle(IminFontStyle.bold);
       await _printer.printText('*** KITCHEN ORDER ***\n');
-      await _printer.setTextBold(false);
-
+      await _printer.setTextStyle(IminFontStyle.normal);
       await _printer.setTextSize(26);
       await _printer.printText('Order #: $orderNumber\n');
       await _printer.printText('Time: $timeStr\n');
@@ -221,25 +202,20 @@ class PrinterProvider extends ChangeNotifier {
         await _printer.printText('Table: $tableNumber\n');
       }
       await _printer.printText('================================\n');
-
       await _printer.setAlignment(IminPrintAlign.left);
-      await _printer.setTextSize(26);
       for (final item in items) {
-        await _printer.setTextBold(true);
+        await _printer.setTextStyle(IminFontStyle.bold);
         await _printer.printText('${item.quantity}x ${item.product.name}\n');
-        await _printer.setTextBold(false);
+        await _printer.setTextStyle(IminFontStyle.normal);
       }
-
       if (notes != null && notes.isNotEmpty) {
         await _printer.printText('================================\n');
         await _printer.printText('NOTES: $notes\n');
       }
-
       await _printer.printText('================================\n');
       await _printer.printAndLineFeed();
       await _printer.partialCut();
-
-      _setStatus(PrinterStatus.ready, 'Kitchen order printed ✓');
+      _setStatus(PrinterStatus.ready, 'Kitchen order printed');
     } catch (e) {
       _setStatus(PrinterStatus.error, 'Print failed: $e');
     }
@@ -249,7 +225,7 @@ class PrinterProvider extends ChangeNotifier {
     if (!_ensureReady()) return;
     try {
       await _printer.openCashBox();
-      _setStatus(PrinterStatus.ready, 'Cash drawer opened ✓');
+      _setStatus(PrinterStatus.ready, 'Cash drawer opened');
     } catch (e) {
       _setStatus(PrinterStatus.error, 'Drawer failed: $e');
     }
